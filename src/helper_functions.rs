@@ -10,6 +10,10 @@ pub fn equals<T: Display>(value: &T) -> String {
     operator("=", value)
 }
 
+pub fn not_equal<T: Display>(value: &T) -> String {
+    operator("<>", value)
+}
+
 pub fn not<T: Display>(value: &T) -> String {
     format!("NOT {}", value)
 }
