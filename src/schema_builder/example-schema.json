@@ -1,0 +1,54 @@
+{
+    "ormerVersion": "1",
+    "database": {
+        "type": "postgres",
+        "exportTs": true,
+        "models": {
+            "User": {
+                "tableName": "users",
+                "members": {
+                    "uuid": "Uuid PrimaryKey",
+                    "firstName": "String",
+                    "lastName": "String",
+                    "favoritePost": "Post ?",
+                    "posts": "Post []"
+                },
+                "queryOptions": {
+                    "uuid": {
+                        "filterTypes": {
+                            "onlyEquals": {
+                                "variants": [
+                                    "equals"
+                                ]
+                            }
+                        },
+                        "sortOrder": [
+                            "equals",
+                            "gte",
+                            "notEqual"
+                        ],
+                        "ignoreVariants": [
+                            "lte",
+                            "lt"
+                        ]
+                    },
+                    "firstName": {
+                        "ignoreVariants": [
+                            "search",
+                            "startsWith",
+                            "endsWith"
+                        ]
+                    }
+                }
+            },
+            "Post": {
+                "tableName": "posts",
+                "members": {
+                    "uuid": "Uuid PrimaryKey",
+                    "userUuid": "Uuid",
+                    "users": "User[]? Ref(post_user, fields: [userUuid], references: [uuid])"
+                }
+            }
+        }
+    }
+}
