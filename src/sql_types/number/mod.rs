@@ -5,7 +5,7 @@ use crate::{
         Sqlize,
         InFilterValue,
         Escapable,
-        Gather,
+        // Gather,
     },
     helper_functions::*
 };
@@ -32,78 +32,44 @@ pub struct NumberFilter<T: Escapable> {
 }
 
 impl<T: Escapable> NumberFilter<T> {
-    fn gather_args_with_column(&self, column: &str) -> Vec<String> {
-        let mut args: Vec<String> = Vec::new();
-        let mut values = self.gather_args();
-        if let Some(value) = values.remove("not") {
-            args.push(not(&prepend_column(column, &value)));
-        }
-        for (_, value) in values {
-            args.push(prepend_column(column, &value));
-        }
-        args
-    }
-}
 
-impl<T: Escapable> Gather for NumberFilter<T> {
-    fn gather_args(&self) -> BTreeMap<&str, String> {
-        let mut args: BTreeMap<&str, String> = BTreeMap::new();
+    fn get_arg(&self) -> String {
         if let Some(value) = &self.equals {
-            args.insert("eqls", equals(&value.escape()));
-            // args.push(equals(column, &value.escape()))
+            return equals(&value.escape());
         }
         if let Some(value) = &self.not {
-            args.insert("not", equals(&value.escape()));
-            // args.push(not(column, &value.escape()))
+            return not_equal(&value.escape());
         }
         if let Some(value) = &self.lt {
-            args.insert("lt", lt(&value.escape()));
-            // args.push(lt(column, &value.escape()))
+            return lt(&value.escape());
         }
         if let Some(value) = &self.lte {
-            args.insert("lte", lte(&value.escape()));
-            // args.push(lte(column, &value.escape()))
+            return lte(&value.escape());
         }
         if let Some(value) = &self.gt {
-            args.insert("gt", gt(&value.escape()));
-            // args.push(gt(column, &value.escape()))
+            return gt(&value.escape());
         }
         if let Some(value) = &self.gte {
-            args.insert("gte", gte(&value.escape()));
-            // args.push(gte(column, &value.escape()))
+            return gte(&value.escape());
         }
         if let Some(filter) = &self.is_in {
-            // TODO: add is_in values
-            let filters = filter.gather_args();
-            if let Some(in_filter) = filters.get("values_str") {
-                args.insert("in", is_in(&in_filter.to_string()));
-            }
+            return filter.get_args();
         }
-        args
+        return "".to_string()
     }
 }
 
 impl<T: Escapable> Sqlize for NumberFilter<T> {
     fn to_sql(&self, column: &str) -> String {
-        let args: Vec<String> = self.gather_args_with_column(column);
-        if args.is_empty() {
-            panic!("No filter options found.");
-        }
-        if args.len() == 1 {
-            return args[0].clone()
-        }
-        enclose::<String>(&args.join(" AND "))
+        prepend_column(column, &self.get_arg())
     }
 
     fn to_nullable_sql(&self, column: &str) -> Option<String> {
-        let args: Vec<String> = self.gather_args_with_column(column);        
-        if args.is_empty() {
+        let sql = self.get_arg();
+        if sql.is_empty() {
             return None;
         }
-        if args.len() == 1 {
-            return Some(args[0].clone())
-        }
-        Some(enclose::<String>(&args.join(" AND ")))
+        Some(prepend_column(column, &sql))
     }
 }
 

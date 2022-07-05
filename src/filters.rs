@@ -1,7 +1,12 @@
 use crate::{
     helper_functions::*
 };
-use serde::Deserialize;
+use serde::{
+    Deserialize,
+    de::{
+        DeserializeOwned
+    }
+};
 use std::{
     collections::{
         BTreeMap
@@ -32,9 +37,9 @@ pub trait Filter {
     fn to_nullable_sql(&self) -> Option<String>;
 }
 
-pub trait Gather {
-    fn gather_args(&self) -> BTreeMap<&str, String>;
-}
+// pub trait Gather {
+//     fn gather_args(&self) -> BTreeMap<&str, String>;
+// }
 
 // impl Escapable for Uuid {}
 
@@ -90,17 +95,8 @@ pub struct InFilterValue<T: Escapable> {
     queries: Option<Vec<String>>,
 }
 impl<T: Escapable> InFilterValue<T> {
-    fn gather_args_with_key(&self, _key: &str) -> Vec<String> {
-        if let Some(value) = self.gather_args().get("values_str") {
-            return vec![ value.to_string() ]
-        }
-        vec![]
-    }
-}
 
-impl<T: Escapable> Gather for InFilterValue<T> {
-    fn gather_args(&self) -> BTreeMap<&str, String> {
-        let mut args: BTreeMap<&str, String> = BTreeMap::new();
+    pub fn get_args(&self) -> String {
         let mut temp_args: Vec<String> = vec![];
         if let Some(values) = &self.values {
             for value in values {
@@ -112,27 +108,24 @@ impl<T: Escapable> Gather for InFilterValue<T> {
                 temp_args.push(enclose::<String>(query))
             }
         }
-        if !temp_args.is_empty() {
-            args.insert("values_str", temp_args.join(","));
+        if temp_args.is_empty() {
+            return "".to_string();
         }
-        args
+        is_in(&temp_args.join(","))
     }
+
 }
 
 impl<T: Escapable> Sqlize for InFilterValue<T> {
     fn to_sql(&self, column: &str) -> String {
-        let args: Vec<String> = self.gather_args_with_key(column);
-        if args.is_empty() {
-            panic!("Could not find filter");
-        }
-        prepend_column(column, &is_in(&args.join(",")))
+        prepend_column(column, &is_in(&self.get_args()))
     }
     fn to_nullable_sql(&self, column: &str) -> Option<String> {
-        let args: Vec<String> = self.gather_args_with_key(column);
-        if args.is_empty() {
+        let sql = self.get_args();
+        if sql.is_empty() {
             return None;
         }
-        Some(prepend_column(column, &is_in(&args.join(","))))
+        Some(prepend_column(column, &sql))
     }
 }
 
@@ -159,17 +152,19 @@ mod test {
         not: Option<Vec<UserFilter>>,
     }
 
-    impl Gather for UserFilter {
-        fn gather_args(&self) -> BTreeMap<&str, String> {
-            let mut args: BTreeMap<&str, String> = BTreeMap::new();
+    impl UserFilter {
+        pub fn get_args(&self) -> String {
+            let mut args: Vec<String> = vec![];
             if let Some(filter_type) = &self.uuid {
                 if let Some(filter) = filter_type.to_nullable_sql("uuid") {
-                    args.insert("uuid", filter);
+                    args.push(filter);
+                    // args.insert("uuid", filter);
                 }
             }
             if let Some(filter_type) = &self.name {
                 if let Some(filter) = filter_type.to_nullable_sql("name") {
-                    args.insert("name", filter);
+                    args.push(filter);
+                    // args.insert("name", filter);
                 }
             }
             if let Some(filters) = &self.all {
@@ -185,7 +180,8 @@ mod test {
                                 filter_list[0].clone()
                             }
                         };
-                        args.insert("all", value);
+                        args.push(value);
+                        // args.insert("all", value);
                     }
                 }
             }
@@ -202,34 +198,25 @@ mod test {
                                 filter_list[0].clone()
                             }
                         };
-                        args.insert("any", value);
+                        args.push(value);
+                        // args.insert("any", value);
                     }
                 }
             }
-            args
+            args.join(" AND ")
         }
     }
 
     impl Filter for UserFilter {
         fn to_sql(&self) -> String {
-            let args = self.gather_args().into_values().collect::<Vec<String>>();
-            if args.is_empty() {
-                panic!("Could not find filter");
-            }
-            if args.len() == 1 {
-                return args[0].clone()
-            }
-            args.join(" AND ")
+            self.get_args()
         }
         fn to_nullable_sql(&self) -> Option<String> {
-            let args = self.gather_args().into_values().collect::<Vec<String>>();
+            let args = self.get_args();
             if args.is_empty() {
                 return None
             }
-            if args.len() == 1 {
-                return Some(args[0].clone())
-            }
-            Some(args.join(" AND "))
+            Some(args)
         }
     }
 
@@ -256,7 +243,7 @@ mod test {
         });
         let filter: UserFilter = from_value(json_filter).unwrap();
         assert_eq!(
-            "name = 'joshua' AND uuid = '4fac5dd0-06d6-451b-9fd6-20b386e5d9bd'",
+            "uuid = '4fac5dd0-06d6-451b-9fd6-20b386e5d9bd' AND name = 'joshua'",
             filter.to_sql()
         );
 

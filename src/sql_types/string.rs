@@ -3,7 +3,7 @@ use crate::{
         Sqlize,
         Escapable,
         InFilterValue,
-        Gather,
+        // Gather,
     },
     helper_functions::*
 };
@@ -35,76 +35,62 @@ pub struct StringFilter {
 }
 
 impl StringFilter {
-    pub fn gather_args_with_key(&self, key: &str) -> Vec<String> {
-        let mut args: Vec<String> = Vec::new();
-        let mut values = self.gather_args();
-        if let Some(value) = values.remove("not") {
-            args.push(not(&prepend_column(key, &value)));
-        }
-        for (_, value) in values {
-            args.push(prepend_column(key, &value));
-        }
-        args
-    }
-}
 
-impl Gather for StringFilter {
-    fn gather_args(&self) -> BTreeMap<&str, String> {
-        let mut args: BTreeMap<&str, String> = BTreeMap::new();
+    fn get_arg(&self) -> String {
         if let Some(value) = &self.equals {
-            args.insert("eqls", equals(&value.escape()));
-            // args.push(equals(column, &value.escape()))
+            return equals(&value.escape());
         }
         if let Some(value) = &self.not {
-            args.insert("not", equals(&value.escape()));
-            // args.push(not(column, &value.escape()))
+            return not_equal(&value.escape());
         }
         if let Some(value) = &self.lt {
-            args.insert("lt", lt(&value.escape()));
-            // args.push(lt(column, &value.escape()))
+            return lt(&value.escape());
         }
         if let Some(value) = &self.lte {
-            args.insert("lte", lte(&value.escape()));
-            // args.push(lte(column, &value.escape()))
+            return lte(&value.escape());
         }
         if let Some(value) = &self.gt {
-            args.insert("gt", gt(&value.escape()));
-            // args.push(gt(column, &value.escape()))
+            return gt(&value.escape());
         }
         if let Some(value) = &self.gte {
-            args.insert("gte", gte(&value.escape()));
-            // args.push(gte(column, &value.escape()))
+            return gte(&value.escape());
         }
-        // if let Some(value) = &self.is_in {
-        //     // TODO: add is_in values
-        //     // if let Some(arg) = value.to_nullable_sql(column) {
-        //     //     args.push(arg)
-        //     // }
-        // }
-        args
+        if let Some(filter) = &self.is_in {
+            return filter.get_args();
+        }
+        if let Some(value) = &self.starts_with {
+            // if let Some(mode) = &self.mode {
+
+            // }
+            return start_with(value);
+        }
+        if let Some(value) = &self.ends_with {
+            // if let Some(mode) = &self.mode {
+
+            // }
+            return ends_with(value);
+        }
+        if let Some(value) = &self.search {
+            // if let Some(mode) = &self.mode {
+
+            // }
+            return search(value);
+        }
+        return "".to_string()
     }
+
 }
 
 impl<'a> Sqlize for StringFilter {
     fn to_sql(&self, column: &str) -> String {
-        let args: Vec<String> = self.gather_args_with_key(column);
-        if args.is_empty() {
-            panic!("Filter not found.");
-        }
-        if args.len() == 1 {
-            return args[0].clone()
-        }
-        enclose::<String>(&args.join(" AND "))
+        prepend_column(column, &self.get_arg())
     }
 
     fn to_nullable_sql(&self, column: &str) -> Option<String> {
-        let args: Vec<String> = self.gather_args_with_key(column);
-        if args.is_empty() {
+        let sql = self.get_arg();
+        if sql.is_empty() {
             return None;
         }
-        if args.len() == 1 {
-            return Some(args[0].clone())
-        }
-        Some(enclose::<String>(&args.join(" AND ")))
+        Some(prepend_column(column, &sql))
     }
 }
