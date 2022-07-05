@@ -34,15 +34,15 @@ pub fn lte<T: Display>(value: &T) -> String {
 // }
 
 pub fn search<T: Display>(value: &T) -> String {
-    operator("LIKE", &format!("%{}%", value))
+    operator("LIKE", &format!("'%{}%'", value))
 }
 
 pub fn start_with<T: Display>(value: &T) -> String {
-    operator("=", &format!("{}%", value))
+    operator("LIKE", &format!("'{}%'", value))
 }
 
 pub fn ends_with<T: Display>(value: &T) -> String {
-    operator("=", &format!("%{}", value))
+    operator("LIKE", &format!("'%{}'", value))
 }
 
 pub fn escape<T: Display>(value: &T) -> String {
