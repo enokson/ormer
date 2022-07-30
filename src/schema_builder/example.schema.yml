@@ -1,0 +1,65 @@
+schema:
+  version: 0.1.0
+  database:
+    type: postgres
+  models:
+    User:
+      members:
+        uuid:
+        type: Uuid
+        default: Uuid,
+        is_id: true
+      first_name: String
+      last_name: String
+      posts:
+        type: Post
+        is_list: true
+        relation:
+          name: user_posts
+      favorite_post:
+        type: Post
+        is_optional: true
+        relation:
+          name: favorite_post
+          fields:
+            - post_uuid
+          references:
+            - uuid
+      favorite_post_uuid: Uuid
+      jobs:
+        type: Job
+        is_list: true
+    Post:
+      members:
+        uuid:
+          type: Uuid
+          default: Uuid 
+          is_id: true
+        body: String
+        user:
+          type: User
+          relation:
+            name: user_posts
+            fields:
+              - user_uuid
+            references:
+              - uuid
+        user_uuid: Uuid
+    Job:
+      members:
+        uuid:
+          type: Uuid
+          default: Uuid
+          is_id: true
+        job_foreman: 
+          type: User
+          relation:
+            name: job_foreman
+            fields:
+              - job_foreman_uuid
+            references:
+              - uuid
+        job_foreman_uuid: Uuid
+        workers:
+          type: User
+          is_list: true

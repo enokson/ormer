@@ -7,11 +7,14 @@
             "User": {
                 "tableName": "users",
                 "members": {
-                    "uuid": "Uuid PrimaryKey",
+                    "uuid": "Uuid @primary @default(Uuid)",
                     "firstName": "String",
                     "lastName": "String",
-                    "favoritePost": "Post ?",
-                    "posts": "Post []"
+                    "email": "String @unique",
+                    "phoneNumber": "String",
+                    "favoritePost": "Post?",
+                    "posts": "Post[]",
+                    "groups": "Group[]"
                 },
                 "queryOptions": {
                     "uuid": {
@@ -44,9 +47,15 @@
             "Post": {
                 "tableName": "posts",
                 "members": {
-                    "uuid": "Uuid PrimaryKey",
-                    "userUuid": "Uuid",
-                    "users": "User[]? Ref(post_user, fields: [userUuid], references: [uuid])"
+                    "uuid": "Uuid @primary @default(Uuid)",
+                    "userUuid": "Uuid?",
+                    "user": "   User @relation( fields: [ userUuid ], references: [ uuid ] )"
+                }
+            },
+            "Group": {
+                "members": {
+                    "uuid": "Uuid @primary @default(Uuid)",
+                    "users": "User[]"
                 }
             }
         }
