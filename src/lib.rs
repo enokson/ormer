@@ -1,4 +1,4 @@
-// pub mod compose;
+pub mod compose;
 pub mod filters;
 pub mod helper_functions;
 pub mod schema_builder;
