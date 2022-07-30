@@ -1,6 +1,4 @@
-use std::{
-    fmt::Display
-};
+use std::fmt::Display;
 
 pub fn operator<T: Display>(operator: &str, value: &T) -> String {
     format!("{} {}", operator, value)

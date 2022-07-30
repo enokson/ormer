@@ -1,18 +1,14 @@
 use crate::{
     filters::{
-        Sqlize,
         Escapable,
         InFilterValue,
         // Gather,
+        Sqlize,
     },
-    helper_functions::*
+    helper_functions::*,
 };
 use serde::Deserialize;
-use std:: {
-    collections::{
-        BTreeMap,
-    },
-};
+use std::collections::BTreeMap;
 
 impl Escapable for String {}
 
@@ -30,12 +26,11 @@ pub struct StringFilter {
     pub mode: Option<String>,
     pub starts_with: Option<String>,
     pub ends_with: Option<String>,
-    #[serde(rename="in")]
-    pub is_in: Option<InFilterValue<String>>
+    #[serde(rename = "in")]
+    pub is_in: Option<InFilterValue<String>>,
 }
 
 impl StringFilter {
-
     fn get_arg(&self) -> String {
         if let Some(value) = &self.equals {
             return equals(&value.escape());
@@ -76,9 +71,8 @@ impl StringFilter {
             // }
             return search(value);
         }
-        return "".to_string()
+        return "".to_string();
     }
-
 }
 
 impl<'a> Sqlize for StringFilter {

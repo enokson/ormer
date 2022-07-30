@@ -1,23 +1,9 @@
-use crate::{
-    helper_functions::*
-};
-use serde::{
-    Deserialize,
-    de::{
-        DeserializeOwned
-    }
-};
-use std::{
-    collections::{
-        BTreeMap
-    },
-    fmt::{
-        Display,
-    },
-};
+use crate::helper_functions::*;
+use serde::{de::DeserializeOwned, Deserialize};
+use std::{collections::BTreeMap, fmt::Display};
 // use uuid::Uuid;
 
-pub trait Sqlize/* : Display */ {
+pub trait Sqlize /* : Display */ {
     fn to_sql(&self, column: &str) -> String;
     fn to_nullable_sql(&self, column: &str) -> Option<String>;
 }
@@ -43,8 +29,6 @@ pub trait Filter {
 
 // impl Escapable for Uuid {}
 
-
-
 // equals
 // not
 // in
@@ -65,7 +49,7 @@ pub struct SqlValue<T: Sqlize>(pub T);
 #[serde(untagged)]
 pub enum FilterType<A: Escapable, B: Sqlize> {
     Filter(B),
-    Eq(A),    
+    Eq(A),
 }
 
 // impl<A: Display, B: Sqlize> FilterType<A, B> {
@@ -76,26 +60,24 @@ impl<A: Escapable, B: Sqlize> Sqlize for FilterType<A, B> {
     fn to_sql(&self, column: &str) -> String {
         match self {
             Self::Eq(value) => prepend_column(column, &equals(&value.escape())),
-            Self::Filter(value) => value.to_sql(column)
+            Self::Filter(value) => value.to_sql(column),
         }
     }
     fn to_nullable_sql(&self, column: &str) -> Option<String> {
         match self {
             Self::Eq(value) => Some(prepend_column(column, &equals(&value.escape()))),
-            Self::Filter(value) => value.to_nullable_sql(column)
+            Self::Filter(value) => value.to_nullable_sql(column),
         }
     }
-
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
-#[serde(rename_all="camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct InFilterValue<T: Escapable> {
     values: Option<Vec<T>>,
     queries: Option<Vec<String>>,
 }
 impl<T: Escapable> InFilterValue<T> {
-
     pub fn get_args(&self) -> String {
         let mut temp_args: Vec<String> = vec![];
         if let Some(values) = &self.values {
@@ -113,7 +95,6 @@ impl<T: Escapable> InFilterValue<T> {
         }
         is_in(&temp_args.join(","))
     }
-
 }
 
 impl<T: Escapable> Sqlize for InFilterValue<T> {
@@ -132,15 +113,9 @@ impl<T: Escapable> Sqlize for InFilterValue<T> {
 #[cfg(test)]
 mod test {
     // use serde::Serialize;
-    use serde_json::{
-        json,
-        from_value,
-    };
     use super::*;
-    use crate::sql_types::{
-        number::*,
-        string::StringFilter,
-    };
+    use crate::sql_types::{number::*, string::StringFilter};
+    use serde_json::{from_value, json};
     use uuid::Uuid;
 
     #[derive(Debug, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
@@ -171,7 +146,8 @@ mod test {
                 if !filters.is_empty() {
                     let filter_list = filters
                         .iter()
-                        .filter_map(|v| v.to_nullable_sql()).collect::<Vec<String>>();
+                        .filter_map(|v| v.to_nullable_sql())
+                        .collect::<Vec<String>>();
                     if !filter_list.is_empty() {
                         let value = {
                             if filter_list.len() > 1 {
@@ -189,7 +165,8 @@ mod test {
                 if !filters.is_empty() {
                     let filter_list = filters
                         .iter()
-                        .filter_map(|v| v.to_nullable_sql()).collect::<Vec<String>>();
+                        .filter_map(|v| v.to_nullable_sql())
+                        .collect::<Vec<String>>();
                     if !filter_list.is_empty() {
                         let value = {
                             if filter_list.len() > 1 {
@@ -214,7 +191,7 @@ mod test {
         fn to_nullable_sql(&self) -> Option<String> {
             let args = self.get_args();
             if args.is_empty() {
-                return None
+                return None;
             }
             Some(args)
         }
@@ -266,10 +243,7 @@ mod test {
             "uuid": { }
         });
         let filter: UserFilter = from_value(json_filter).unwrap();
-        assert_eq!(
-            None,
-            filter.to_nullable_sql()
-        );
+        assert_eq!(None, filter.to_nullable_sql());
 
         let json_filter = json!({
             "all": [
@@ -287,5 +261,4 @@ mod test {
             filter.to_sql()
         );
     }
-
 }

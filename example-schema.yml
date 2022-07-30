@@ -1,0 +1,62 @@
+schema:
+  database:
+    type: postgres
+  models:
+
+    User:
+      members:
+        uuid: 
+          type: Uuid
+          is_id: true
+          default: Uuid
+        first_name: String
+        last_name: String
+        # define a many-to-one relationship
+        posts: 
+          type: Post
+          list: true
+        # define a one-to-one relationship
+        favorite_post:
+          type: Post
+          is_optional: true
+          relation:
+            name: favorite_post
+            fields:
+              - favorite_post_uuid
+            references:
+              - uuid
+        favorite_post_uuid: Uuid
+        jobs: 
+          type: Job
+          is_list: true
+
+    Post:
+      members:
+        uuid:
+          type: Uuid
+          is_id: true
+          default: Uuid
+        user: 
+          type: User
+          # define a many-to-one relationship
+          relation:
+            name: user_post
+            fields:
+              - user_uuid
+            references:
+              - uuid
+        user_uuid: Uuid
+
+    Job:
+      members:
+        uuid: 
+          type: Uuid
+          is_id: true
+          default: Uuid
+        workers:
+          type: User
+          is_list: true
+
+        # There is an implicit many-to-many relationship between
+        # Job and User that reference thier primary keys
+

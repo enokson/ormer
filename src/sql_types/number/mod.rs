@@ -2,18 +2,35 @@
 
 use crate::{
     filters::{
-        Sqlize,
-        InFilterValue,
         Escapable,
         // Gather,
+        InFilterValue,
+        Sqlize,
     },
-    helper_functions::*
+    helper_functions::*,
 };
-use serde::Deserialize;
+// use postgres::{
+//     types::{
+//         ToSql
+//     }
+// };
+use serde::{
+    de::{DeserializeOwned, Deserializer},
+    Deserialize,
+};
+use serde_json::{
+    // Value,
+    from_value,
+    json,
+};
 use std::{
-    collections::{
-        BTreeMap
-    },
+    // any::{Any},
+    // collections::{
+    //     BTreeMap
+    // },
+    fmt::Debug,
+    // marker::{PhantomData, PhantomPinned},
+    rc::Rc,
 };
 use uuid::Uuid;
 
@@ -27,12 +44,11 @@ pub struct NumberFilter<T: Escapable> {
     pub gt: Option<T>,
     pub gte: Option<T>,
     // pub contains: Option<T>,
-    #[serde(rename="in")]
+    #[serde(rename = "in")]
     pub is_in: Option<InFilterValue<T>>,
 }
 
 impl<T: Escapable> NumberFilter<T> {
-
     fn get_arg(&self) -> String {
         if let Some(value) = &self.equals {
             return equals(&value.escape());
@@ -55,7 +71,7 @@ impl<T: Escapable> NumberFilter<T> {
         if let Some(filter) = &self.is_in {
             return filter.get_args();
         }
-        return "".to_string()
+        return "".to_string();
     }
 }
 
@@ -91,7 +107,7 @@ impl Escapable for Uuid {}
 // FLOAT(size, d)	A floating point number. The total number of digits is specified in size. The number of digits after the decimal point is specified in the d parameter. This syntax is deprecated in MySQL 8.0.17, and it will be removed in future MySQL versions
 // FLOAT(p)	A floating point number. MySQL uses the p value to determine whether to use FLOAT or DOUBLE for the resulting data type. If p is from 0 to 24, the data type becomes FLOAT(). If p is from 25 to 53, the data type becomes DOUBLE()
 // DOUBLE(size, d)	A normal-size floating point number. The total number of digits is specified in size. The number of digits after the decimal point is specified in the d parameter
-// DOUBLE PRECISION(size, d)	 
+// DOUBLE PRECISION(size, d)
 // DECIMAL(size, d)	An exact fixed-point number. The total number of digits is specified in size. The number of digits after the decimal point is specified in the d parameter. The maximum number for size is 65. The maximum number for d is 30. The default value for size is 10. The default value for d is 0.
 // DEC(size, d)
 
