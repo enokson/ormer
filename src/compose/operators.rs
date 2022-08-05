@@ -1,12 +1,10 @@
 use std::fmt::Write;
 use postgres::types::ToSql;
 
-pub fn eqls<'a: 'b, 'b>(col: &'b str, param: &'a (impl ToSql + Sync)) -> 
-impl Fn(i32, Vec<&'a (dyn ToSql + Sync)>, String) -> (i32, Vec<&'a (dyn ToSql + Sync)>, String) + 'b {
-    move |index, mut params, mut sql| {
-        write!(&mut sql, "{}=${}", col, index).unwrap();
-        params.push(param as &(dyn ToSql + Sync));
-        (index + 1, params, sql)
+pub fn eqls<'a: 'b, 'b>(col: &'b str, param: i32) -> impl Fn(String) -> String + 'b {
+    move |mut sql| {
+        write!(&mut sql, "{}=${}", col, param).unwrap();
+        sql
     }
 }
 
@@ -94,7 +92,7 @@ mod test {
     fn eqls_test() {
         assert_eq!(
             "id=$1",
-            eqls("id", &1)(1, Vec::with_capacity(1), String::with_capacity(5)).2);
+            eqls("id", 1)(String::with_capacity(5)));
     }
 
 }
