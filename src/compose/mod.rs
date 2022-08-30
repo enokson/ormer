@@ -284,6 +284,13 @@ pub fn r_postgres_indexer<'a>(
     }
 }
 
+pub fn holder(index: i32) -> impl Fn(String) -> String {
+    move |mut sql| {
+        write!(&mut sql, "${}", index).unwrap();
+        sql
+    }
+}
+
 pub fn prepare<'a>() -> impl Fn(i32) -> (Box<dyn Fn(String) -> String>, i32) + 'a {
     move |index| {
         (Box::new(move |mut sql| {
