@@ -1,9 +1,5 @@
 pub mod compose;
-pub mod filters;
-pub mod helper_functions;
 pub mod schema_builder;
-pub mod sql_types;
-pub mod query_options;
 
 
 #[cfg(test)]
