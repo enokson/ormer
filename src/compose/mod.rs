@@ -284,9 +284,12 @@ pub fn r_postgres_indexer<'a>(
     }
 }
 
-pub fn prepare<'a>(col: &'a str) -> impl Fn(i32) -> (&'a str, i32) + 'a {
+pub fn prepare<'a>() -> impl Fn(i32) -> (Box<dyn Fn(String) -> String>, i32) + 'a {
     move |index| {
-        (&col, index + 1)
+        (Box::new(move |mut sql| {
+            write!(&mut sql, "${}", index).unwrap();
+            sql
+        }), index + 1)
     }
 }
 
